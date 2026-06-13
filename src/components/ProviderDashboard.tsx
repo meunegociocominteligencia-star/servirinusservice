@@ -109,6 +109,18 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
     }
   };
 
+  const handleConfirmPaymentP2P = async (requestId: string) => {
+    if (confirm("Você confirma que recebeu o valor do PIX em sua conta bancária? Esta ação compensará o faturamento e finalizará as obrigações.")) {
+      try {
+        await serviceRequestService.confirmPayment(requestId);
+        loadProviderDashboardData();
+        alert("Recebimento confirmado do PIX com sucesso! Serviço finalizado e quitado.");
+      } catch (err) {
+        alert("Erro ao confirmar recebimento: " + err);
+      }
+    }
+  };
+
   // Submit bid / proposal
   const handleSendBidSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,11 +285,26 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                           </span>
 
                           <span className={`text-[10px] uppercase font-bold py-0.5 px-2 rounded-full ${
-                            req.status_payment === 'paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-805'
+                            req.status_payment === 'paid' ? 'bg-emerald-100 text-emerald-800' :
+                            req.status_payment === 'pending_confirm' ? 'bg-amber-100 text-amber-800 animate-pulse border border-amber-300' :
+                            'bg-rose-100 text-rose-800'
                           }`}>
-                            Transação Bancária: {req.status_payment === 'paid' ? 'PIX Compensado' : 'Aguardando PIX cliente'}
+                            Transação Bancária: {
+                              req.status_payment === 'paid' ? 'PIX Compensado' : 
+                              req.status_payment === 'pending_confirm' ? 'Confirmação Pendente (Recebimento)' :
+                              'Aguardando PIX cliente'
+                            }
                           </span>
                         </div>
+
+                        {req.status_payment === 'pending_confirm' && (
+                          <div className="bg-amber-50 border border-amber-200/80 rounded-lg p-2 flex items-center gap-2 text-xs text-amber-800 leading-tight">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping shrink-0" />
+                            <span>
+                              <strong>O cliente informou ter realizado o PIX.</strong> Favor conferir se o dinheiro caiu em sua conta bancária de recebimento cadastrada.
+                            </span>
+                          </div>
+                        )}
 
                         <div>
                           <h4 className="font-bold text-neutral-900 text-sm">{req.title}</h4>
@@ -334,6 +361,17 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                               className="py-1 px-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors glow-emerald"
                             >
                               Finalizar Trabalho e Solicitar PIX
+                            </button>
+                          )}
+
+                          {/* Confirm P2P payment manual receipt */}
+                          {req.status_payment === 'pending_confirm' && (
+                            <button
+                              onClick={() => handleConfirmPaymentP2P(req.id)}
+                              className="py-1 px-3.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition-colors shadow-xs flex items-center gap-1.5"
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                              Confirmar Recebimento PIX
                             </button>
                           )}
 
@@ -596,6 +634,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           title={`Assinatura do Plano ${isUpgradingPlan.name}`}
           recipientName="Severinu Marketplace Corporativo"
           amount={isUpgradingPlan.price}
+          paymentType="subscription"
           onPaymentSuccess={handleSubscribeSuccess}
           onClose={() => setIsUpgradingPlan(null)}
         />

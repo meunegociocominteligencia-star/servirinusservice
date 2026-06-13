@@ -1370,6 +1370,30 @@ export const serviceRequestService = {
     dbMemory.save('sev_notifications', notifications);
 
     return reqs[index];
+  },
+
+  async declarePaymentSent(requestId: string): Promise<ServiceRequest> {
+    const reqs = dbMemory.get<ServiceRequest[]>('sev_requests');
+    const index = reqs.findIndex(r => r.id === requestId);
+    if (index === -1) throw new Error('Pedido de serviço não encontrado.');
+
+    reqs[index].status_payment = 'pending_confirm';
+    dbMemory.save('sev_requests', reqs);
+
+    // Notify provider
+    const notifications = dbMemory.get<Notification[]>('sev_notifications');
+    notifications.unshift({
+      id: Math.random().toString(36).substring(2, 9),
+      user_id: reqs[index].provider_id,
+      title: 'Cliente enviou o PIX!',
+      message: `O cliente informou ter realizado o pagamento de R$ ${reqs[index].final_value || reqs[index].suggested_value} pelo serviço "${reqs[index].title}". Por favor, verifique em sua conta e confirme.`,
+      type: 'payment',
+      is_read: false,
+      created_at: new Date().toISOString()
+    });
+    dbMemory.save('sev_notifications', notifications);
+
+    return reqs[index];
   }
 };
 

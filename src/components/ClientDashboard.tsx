@@ -725,6 +725,8 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           title={`Pagamento pelo serviço "${payingRequest.title}"`}
           recipientName={profiles.find(p => p.id === payingRequest.provider_id)?.full_name || 'Severinu Provider'}
           amount={payingRequest.final_value || payingRequest.suggested_value}
+          recipientKey={providers.find(p => p.id === payingRequest.provider_id)?.pix_key}
+          paymentType="service"
           onPaymentSuccess={handlePaySuccess}
           onClose={() => setPayingRequest(null)}
         />

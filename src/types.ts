@@ -75,7 +75,7 @@ export interface ServiceRequest {
   final_value?: number;
   scheduled_date: string;
   status: 'waiting' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
-  status_payment: 'unpaid' | 'pending_payment' | 'paid';
+  status_payment: 'unpaid' | 'pending_payment' | 'paid' | 'pending_confirm';
   created_at: string;
 }
 

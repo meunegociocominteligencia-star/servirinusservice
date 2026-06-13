@@ -543,13 +543,6 @@ export default function App() {
               {/* LOGIN FLOW */}
               {authModal === 'login' && (
                 <form onSubmit={handleLoginSubmit} className="space-y-4">
-                  <div className="bg-neutral-50 p-3 rounded-lg text-[10px] text-neutral-600 border border-neutral-200">
-                    <strong>Contas Cadastradas para Testes:</strong><br />
-                    • Administrador: <span className="font-mono text-neutral-800 font-bold">admin@severinu.com</span><br />
-                    • Cliente: <span className="font-mono text-neutral-800 font-bold">joao.silva@gmail.com</span><br />
-                    • Prestador: <span className="font-mono text-neutral-800 font-bold">carlos.moraes@outlook.com</span>
-                  </div>
-
                   <div>
                     <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-1">
                       Digite seu e-mail cadastrado

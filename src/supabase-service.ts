@@ -357,11 +357,6 @@ function initLocalStorageDB() {
   checkAndSet('sev_payments', INITIAL_PAYMENTS);
   checkAndSet('sev_favorites', [] as Favorite[]);
   checkAndSet('sev_bids', [] as Array<any>);
-  
-  if (!localStorage.getItem('sev_currentUser')) {
-    // Default to the first client so the app runs logged-in out of the box!
-    localStorage.setItem('sev_currentUser', JSON.stringify(INITIAL_PROFILES[1]));
-  }
 }
 
 async function saveArrayToFirestore(key: string, data: any[]) {

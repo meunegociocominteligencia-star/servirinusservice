@@ -51,19 +51,19 @@ const INITIAL_PLANS: SubscriptionPlan[] = [
 ];
 
 const INITIAL_PROFILES: Profile[] = [
-  { id: 'user-admin', email: 'admin@severinu.com', role: 'admin', full_name: 'Gustavo Santos (Supervisor)', avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() },
+  { id: 'user-admin', email: 'admin@severinu.com', role: 'admin', full_name: 'Gustavo Santos (Supervisor)', avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' },
   
-  { id: 'user-client-1', email: 'joao.silva@gmail.com', role: 'client', full_name: 'João Silva', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() },
-  { id: 'user-client-2', email: 'marina.souza@gmail.com', role: 'client', full_name: 'Marina Souza', avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() },
-  { id: 'user-client-3', email: 'lucas.oliveira@gmail.com', role: 'client', full_name: 'Lucas Oliveira', avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() },
-  { id: 'user-client-4', email: 'patricia.alves@gmail.com', role: 'client', full_name: 'Patrícia Alves', avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() },
-  { id: 'user-client-5', email: 'roberto.mendes@gmail.com', role: 'client', full_name: 'Roberto Mendes', avatar_url: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() },
+  { id: 'user-client-1', email: 'joao.silva@gmail.com', role: 'client', full_name: 'João Silva', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' },
+  { id: 'user-client-2', email: 'marina.souza@gmail.com', role: 'client', full_name: 'Marina Souza', avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' },
+  { id: 'user-client-3', email: 'lucas.oliveira@gmail.com', role: 'client', full_name: 'Lucas Oliveira', avatar_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' },
+  { id: 'user-client-4', email: 'patricia.alves@gmail.com', role: 'client', full_name: 'Patrícia Alves', avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' },
+  { id: 'user-client-5', email: 'roberto.mendes@gmail.com', role: 'client', full_name: 'Roberto Mendes', avatar_url: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' },
   
-  { id: 'user-provider-1', email: 'carlos.moraes@outlook.com', role: 'provider', full_name: 'Carlos Moraes', avatar_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() },
-  { id: 'user-provider-2', email: 'elena.rodrigues@hotmail.com', role: 'provider', full_name: 'Elena Rodrigues', avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() },
-  { id: 'user-provider-3', email: 'marcus.thorn@gmail.com', role: 'provider', full_name: 'Marcos de Souza', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() },
-  { id: 'user-provider-4', email: 'ricardo.pintura@gmail.com', role: 'provider', full_name: 'Ricardo Oliveira', avatar_url: 'https://images.unsplash.com/photo-1500048993953-d23a436266cf?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() },
-  { id: 'user-provider-5', email: 'fernanda.jardim@gmail.com', role: 'provider', full_name: 'Fernanda Lima', avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString() }
+  { id: 'user-provider-1', email: 'carlos.moraes@outlook.com', role: 'provider', full_name: 'Carlos Moraes', avatar_url: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' },
+  { id: 'user-provider-2', email: 'elena.rodrigues@hotmail.com', role: 'provider', full_name: 'Elena Rodrigues', avatar_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' },
+  { id: 'user-provider-3', email: 'marcus.thorn@gmail.com', role: 'provider', full_name: 'Marcos de Souza', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' },
+  { id: 'user-provider-4', email: 'ricardo.pintura@gmail.com', role: 'provider', full_name: 'Ricardo Oliveira', avatar_url: 'https://images.unsplash.com/photo-1500048993953-d23a436266cf?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' },
+  { id: 'user-provider-5', email: 'fernanda.jardim@gmail.com', role: 'provider', full_name: 'Fernanda Lima', avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80', created_at: new Date().toISOString(), password: '123456' }
 ];
 
 const INITIAL_CLIENTS: ClientProfile[] = [
@@ -658,6 +658,7 @@ export const authService = {
     state: string;
     postalCode: string;
     avatarUrl?: string;
+    password?: string;
   }): Promise<Profile> {
     if (isRealSupabase && supabase) {
       const cleanCpf = fields.cpf.replace(/\D/g, '');
@@ -690,7 +691,8 @@ export const authService = {
         role: 'client',
         full_name: fields.fullName,
         avatar_url: fields.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        password: fields.password || '123456'
       };
 
       const newClient: ClientProfile = {
@@ -750,7 +752,8 @@ export const authService = {
       role: 'client',
       full_name: nameFormatted,
       avatar_url: fields.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      password: fields.password || '123456'
     };
 
     // 2. Create Client Profile
@@ -796,6 +799,7 @@ export const authService = {
     galleryUrls?: string[];
     documentUrl?: string;
     residenceProofUrl?: string;
+    password?: string;
   }): Promise<Profile> {
     if (isRealSupabase && supabase) {
       const cleanCpfCnpj = fields.cpfCnpj.replace(/\D/g, '');
@@ -828,7 +832,8 @@ export const authService = {
         role: 'provider',
         full_name: fields.fullName,
         avatar_url: fields.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        password: fields.password || '123456'
       };
 
       const newProvider: ProviderProfile = {
@@ -913,7 +918,8 @@ export const authService = {
       role: 'provider',
       full_name: fields.fullName,
       avatar_url: fields.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      password: fields.password || '123456'
     };
 
     // 2. Provider Profile
@@ -966,7 +972,7 @@ export const authService = {
     return newProfile;
   },
 
-  async login(email: string): Promise<Profile> {
+  async login(email: string, password?: string): Promise<Profile> {
     if (isRealSupabase && supabase) {
       const { data, error } = await supabase
         .from('sev_profiles')
@@ -977,6 +983,10 @@ export const authService = {
       if (error) throw new Error(error.message);
       if (!data) {
         throw new Error('E-mail não cadastrado em nossa base de dados.');
+      }
+
+      if (password && data.password && data.password !== password) {
+        throw new Error('Senha incorreta para a conta informada.');
       }
 
       if (data.role === 'provider') {
@@ -1001,6 +1011,10 @@ export const authService = {
     
     if (!matched) {
       throw new Error('E-mail não cadastrado em nossa base de dados.');
+    }
+
+    if (password && matched.password && matched.password !== password) {
+      throw new Error('Senha incorreta para a conta informada.');
     }
 
     // Lock account checks if roles have restrictions

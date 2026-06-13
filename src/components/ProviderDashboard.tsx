@@ -204,9 +204,9 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="text-xs font-bold text-neutral-500 hover:text-neutral-900 transition-colors py-2 px-3 hover:bg-neutral-100 rounded-lg"
+                className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors py-2 px-3 hover:bg-rose-50 rounded-lg flex items-center gap-1"
               >
-                Ir para Home
+                Sair da Conta
               </button>
             )}
           </div>

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { QrCode, CheckCircle, Copy, AlertCircle, Sparkles } from 'lucide-react';
+import { dbMemory } from '../supabase-service';
+import { SystemSettings } from '../types';
 
 interface PixPaymentModalProps {
   id: string; // reference id (request_id or subscription_id)
@@ -8,6 +10,91 @@ interface PixPaymentModalProps {
   amount: number;
   onPaymentSuccess: () => void;
   onClose: () => void;
+  recipientKey?: string; // Optional recipient Pix Key override
+}
+
+// CRC16-CCITT implementation (0x1021) for PIX standard compliance
+function calculateCRC16(str: string): string {
+  let crc = 0xFFFF;
+  for (let i = 0; i < str.length; i++) {
+    const charCode = str.charCodeAt(i);
+    crc ^= (charCode << 8);
+    for (let j = 0; j < 8; j++) {
+      if ((crc & 0x8000) !== 0) {
+        crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+      } else {
+        crc = (crc << 1) & 0xFFFF;
+      }
+    }
+  }
+  let hex = crc.toString(16).toUpperCase();
+  while (hex.length < 4) {
+    hex = '0' + hex;
+  }
+  return hex;
+}
+
+function generatePixPayload({
+  key,
+  name,
+  city,
+  amount,
+  txid
+}: {
+  key: string;
+  name: string;
+  city: string;
+  amount: number;
+  txid: string;
+}): string {
+  const f = (id: string, val: string) => {
+    const len = val.length.toString().padStart(2, '0');
+    return `${id}${len}${val}`;
+  };
+
+  const gui = f('00', 'br.gov.bcb.pix');
+  const pixKey = f('01', key);
+  const merchantAccountInfo = f('26', `${gui}${pixKey}`);
+
+  const merchantCategory = f('52', '0000');
+  const currency = f('53', '986');
+  const amtStr = amount.toFixed(2);
+  const transactionAmount = f('54', amtStr);
+  const countryCode = f('58', 'BR');
+  
+  const formatText = (text: string, maxLen: number) => {
+    return text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // remove accents
+      .replace(/[^a-zA-Z0-9 ]/g, "")  // keep alphanumeric
+      .substring(0, maxLen)
+      .trim();
+  };
+
+  const formattedName = formatText(name || 'SEVERINU MARKETPLACE', 25) || 'SEVERINU';
+  const formattedCity = formatText(city || 'SAO PAULO', 15) || 'SAO PAULO';
+
+  const merchantName = f('59', formattedName);
+  const merchantCity = f('60', formattedCity);
+
+  const cleanTxid = formatText(txid || '***', 25).replace(/\s+/g, '') || '***';
+  const referenceLabel = f('05', cleanTxid);
+  const additionalData = f('62', referenceLabel);
+
+  const part1 = 
+    f('00', '01') +
+    merchantAccountInfo +
+    merchantCategory +
+    currency +
+    transactionAmount +
+    countryCode +
+    merchantName +
+    merchantCity +
+    additionalData +
+    '6304';
+
+  const crc = calculateCRC16(part1);
+  return part1 + crc;
 }
 
 export const PixPaymentModal: React.FC<PixPaymentModalProps> = ({
@@ -16,16 +103,28 @@ export const PixPaymentModal: React.FC<PixPaymentModalProps> = ({
   recipientName,
   amount,
   onPaymentSuccess,
-  onClose
+  onClose,
+  recipientKey
 }) => {
   const [copied, setCopied] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
 
-  // Generate a mock Copia e Cola string based on input parameters
-  const pixCopyPasteText = `00020126580014BR.GOV.BCB.PIX0136${id}-recipient=${encodeURIComponent(
-    recipientName.substring(0, 10)
-  )}-amount=${amount.toFixed(2)}`;
+  // Fetch administrator configuration settings for default keys
+  const settingsArray = dbMemory.get<SystemSettings[]>('sev_system_settings') || [];
+  const systemSettings = settingsArray[0];
+
+  const resolvedPixKey = recipientKey || systemSettings?.pix_recipient_key || 'financeiro@severinu.com';
+  const resolvedCity = systemSettings?.pix_recipient_city || 'SAO PAULO';
+
+  // Generate standard BR Code Copy & Paste string
+  const pixCopyPasteText = generatePixPayload({
+    key: resolvedPixKey,
+    name: recipientName,
+    city: resolvedCity,
+    amount: amount,
+    txid: id
+  });
 
   const handleCopy = () => {
     navigator.clipboard.writeText(pixCopyPasteText);
@@ -47,7 +146,7 @@ export const PixPaymentModal: React.FC<PixPaymentModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-neutral-100 flex flex-col">
+      <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-neutral-100 flex flex-col animate-fade-in">
         {/* Banner header resembling a banking layout */}
         <div className="bg-emerald-600 text-white p-6 relative">
           <div className="absolute top-4 right-4 text-emerald-100 text-xs font-mono font-bold uppercase py-0.5 px-2 bg-emerald-700/60 rounded">
@@ -75,18 +174,15 @@ export const PixPaymentModal: React.FC<PixPaymentModalProps> = ({
                 </p>
               </div>
 
-              {/* Enhanced Simulated QR Code Container */}
+              {/* Real QR Code API integration for instant bank scanning compat */}
               <div className="relative p-4 bg-emerald-50/50 rounded-xl mb-4 border border-emerald-100/60 flex items-center justify-center">
-                <div className="bg-white p-2 rounded-lg shadow-xs">
-                  {/* Since external resource referrers might block or flinch in iframe previews, 
-                      we display an elegant styled QR representation centered inside the client canvas */}
-                  <div className="w-40 h-40 flex items-center justify-center bg-neutral-50 border border-neutral-100 rounded relative">
-                    <QrCode className="w-32 h-32 text-neutral-800" />
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/10">
-                      <div className="bg-emerald-600 text-white p-1 rounded shadow-lg text-[10px] font-bold">
-                        SEVERINU
-                      </div>
-                    </div>
+                <div className="bg-white p-2 rounded-lg shadow-sm">
+                  <div className="w-40 h-40 flex items-center justify-center bg-white border border-neutral-100 rounded relative p-1">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(pixCopyPasteText)}`}
+                      alt="Pix QR Code"
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                 </div>
               </div>
@@ -99,7 +195,7 @@ export const PixPaymentModal: React.FC<PixPaymentModalProps> = ({
               {/* Pix Copia e Cola widget */}
               <div className="w-full bg-neutral-50 border border-neutral-200 rounded-xl p-3 mb-6 flex flex-col items-stretch text-left">
                 <span className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider mb-1">
-                  Código Copia e Cola PIX
+                  Código Copia e Cola PIX (Compatível com todos os bancos)
                 </span>
                 <div className="flex items-center gap-2">
                   <input
@@ -112,7 +208,7 @@ export const PixPaymentModal: React.FC<PixPaymentModalProps> = ({
                     onClick={handleCopy}
                     id="btn-copy-pix"
                     type="button"
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
                       copied
                         ? 'bg-emerald-100 text-emerald-800'
                         : 'bg-white hover:bg-neutral-100 text-neutral-700 border border-neutral-200'

@@ -12,6 +12,7 @@ export interface Profile {
   full_name: string;
   avatar_url?: string;
   created_at: string;
+  password?: string;
 }
 
 export interface ClientProfile {

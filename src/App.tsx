@@ -38,6 +38,7 @@ export default function App() {
   
   // Sign-In credentials form
   const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   
   // Registration Forms Fields
   const [regName, setRegName] = useState('');
@@ -48,6 +49,7 @@ export default function App() {
   const [regCity, setRegCity] = useState('');
   const [regState, setRegState] = useState('');
   const [regPostalCode, setRegPostalCode] = useState('');
+  const [regPassword, setRegPassword] = useState('');
   
   // Specific Client Sign-Up Fields
   const [regBirthDate, setRegBirthDate] = useState('');
@@ -122,9 +124,10 @@ export default function App() {
 
     setIsSubmitting(true);
     try {
-      const profile = await authService.login(loginEmail.trim());
+      const profile = await authService.login(loginEmail.trim(), loginPassword);
       setCurrentUser(profile);
       setLoginEmail('');
+      setLoginPassword('');
       setAuthModal(null);
     } catch (err) {
       alert((err as Error).message);
@@ -152,7 +155,8 @@ export default function App() {
         address: regAddress || 'Endereço Padrão',
         city: regCity || 'São Paulo',
         state: regState || 'SP',
-        postalCode: regPostalCode || '01000-000'
+        postalCode: regPostalCode || '01000-000',
+        password: regPassword || '123456'
       });
 
       dbMemory.setCurrentUser(profile);
@@ -189,7 +193,8 @@ export default function App() {
         categoryId: regCategoryId,
         specialty: regSpecialty,
         description: regDescription,
-        pixKey: regPixKey
+        pixKey: regPixKey,
+        password: regPassword || '123456'
       });
 
       // Quick auto-login for testing (starts pending!)
@@ -219,6 +224,7 @@ export default function App() {
     setRegSpecialty('');
     setRegDescription('');
     setRegPixKey('');
+    setRegPassword('');
   };
 
   // Filter approved list according to inputs
@@ -557,6 +563,20 @@ export default function App() {
                     />
                   </div>
 
+                  <div>
+                    <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest block mb-1">
+                      Senha de Acesso *
+                    </label>
+                    <input
+                      required
+                      type="password"
+                      placeholder="Digite sua senha (ex: 123456)"
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      className="w-full p-2.5 text-xs sm:text-sm border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900"
+                    />
+                  </div>
+
                   <button
                     type="submit"
                     id="btn-login-submit"
@@ -641,6 +661,11 @@ export default function App() {
                     </div>
                   </div>
 
+                  <div>
+                    <label className="text-[10px] font-bold text-neutral-900 uppercase">Senha de Acesso *</label>
+                    <input type="password" required placeholder="Crie uma senha de acesso" value={regPassword} onChange={e => setRegPassword(e.target.value)} className="w-full p-2 text-xs border border-neutral-250 rounded-lg focus:outline-none focus:border-neutral-900 font-bold" />
+                  </div>
+
                   <button
                     type="submit"
                     disabled={isSubmitting}
@@ -716,6 +741,11 @@ export default function App() {
                       <label className="text-[10px] font-bold text-neutral-400 uppercase">Estado (UF)</label>
                       <input type="text" placeholder="SP" value={regState} onChange={e => setRegState(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg" />
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-neutral-900 uppercase">Senha de Acesso *</label>
+                    <input type="password" required placeholder="Crie uma senha de acesso" value={regPassword} onChange={e => setRegPassword(e.target.value)} className="w-full p-2 text-xs border border-neutral-250 rounded-lg focus:outline-none focus:border-neutral-900 font-bold" />
                   </div>
 
                   {/* Document upload block decoration */}

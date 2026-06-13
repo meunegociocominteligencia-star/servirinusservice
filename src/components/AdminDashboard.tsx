@@ -3,7 +3,7 @@ import {
   Shield, Users, Check, X, AlertTriangle, Settings, 
   FileText, TrendingUp, DollarSign, Activity, Eye, Trash2, Globe,
   Wrench, Compass, LogOut, MapPin, CreditCard, Briefcase, Search, Loader2,
-  Calendar, Filter
+  Calendar, Filter, Edit, Key
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, 
@@ -41,8 +41,197 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
   const [newCatName, setNewCatName] = useState('');
   const [newCatDesc, setNewCatDesc] = useState('');
 
+  // Edit User Modal states
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editCpfCnpj, setEditCpfCnpj] = useState('');
+  const [editBirthDate, setEditBirthDate] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editState, setEditState] = useState('');
+  const [editPostalCode, setEditPostalCode] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editSpecialty, setEditSpecialty] = useState('');
+  const [editCategoryId, setEditCategoryId] = useState('');
+  const [editPixKey, setEditPixKey] = useState('');
+
+  const handleOpenEditModal = (userId: string) => {
+    const prof = profiles.find(p => p.id === userId);
+    if (!prof) return;
+
+    setEditingUserId(userId);
+    setEditName(prof.full_name || '');
+    setEditEmail(prof.email || '');
+    setEditPassword(prof.password || '123456');
+
+    // Reset details fields
+    setEditPhone('');
+    setEditCpfCnpj('');
+    setEditBirthDate('');
+    setEditAddress('');
+    setEditCity('');
+    setEditState('');
+    setEditPostalCode('');
+    setEditDescription('');
+    setEditSpecialty('');
+    setEditCategoryId('');
+    setEditPixKey('');
+
+    if (prof.role === 'client') {
+      const cli = clients.find(c => c.id === userId);
+      if (cli) {
+        setEditPhone(cli.whatsapp || '');
+        setEditCpfCnpj(cli.cpf || '');
+        setEditBirthDate(cli.birth_date || '');
+        setEditAddress(cli.address || '');
+        setEditCity(cli.city || '');
+        setEditState(cli.state || '');
+        setEditPostalCode(cli.postal_code || '');
+      }
+    } else if (prof.role === 'provider') {
+      const prov = providers.find(p => p.id === userId);
+      if (prov) {
+        setEditPhone(prov.whatsapp || '');
+        setEditCpfCnpj(prov.cpf_cnpj || '');
+        setEditAddress(prov.address || '');
+        setEditCity(prov.city || '');
+        setEditState(prov.state || '');
+        setEditPostalCode(prov.postal_code || '');
+        setEditDescription(prov.description || '');
+        setEditSpecialty(prov.specialty || '');
+        setEditCategoryId(prov.category_id || '');
+        setEditPixKey(prov.pix_key || '');
+      }
+    }
+  };
+
+  const handleSaveUserSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUserId) return;
+
+    const matchedProfile = profiles.find(p => p.id === editingUserId);
+    if (!matchedProfile) return;
+
+    // 1. Update Base Profile
+    const updatedProfile: Profile = {
+      ...matchedProfile,
+      full_name: editName,
+      email: editEmail,
+      password: editPassword
+    };
+
+    // Prepare lists
+    const updatedProfilesList = profiles.map(p => p.id === editingUserId ? updatedProfile : p);
+    dbMemory.save('sev_profiles', updatedProfilesList);
+
+    if (isRealSupabase && supabase) {
+      const { error: pErr } = await supabase.from('sev_profiles').upsert(updatedProfile);
+      if (pErr) console.error('Error saving profile in Supabase:', pErr.message);
+    }
+
+    // 2. Update Client details
+    if (matchedProfile.role === 'client') {
+      const cli = clients.find(c => c.id === editingUserId);
+      if (cli) {
+        const updatedClient: ClientProfile = {
+          ...cli,
+          whatsapp: editPhone.replace(/\D/g, ''),
+          cpf: editCpfCnpj,
+          birth_date: editBirthDate,
+          address: editAddress,
+          city: editCity,
+          state: editState,
+          postal_code: editPostalCode
+        };
+        const updatedClientsList = clients.map(c => c.id === editingUserId ? updatedClient : c);
+        dbMemory.save('sev_clients', updatedClientsList);
+
+        if (isRealSupabase && supabase) {
+          const { error: cErr } = await supabase.from('sev_clients').upsert(updatedClient);
+          if (cErr) console.error('Error saving client in Supabase:', cErr.message);
+        }
+      }
+    }
+
+    // 3. Update Provider details
+    if (matchedProfile.role === 'provider') {
+      const prov = providers.find(p => p.id === editingUserId);
+      if (prov) {
+        const updatedProvider: ProviderProfile = {
+          ...prov,
+          whatsapp: editPhone.replace(/\D/g, ''),
+          cpf_cnpj: editCpfCnpj,
+          address: editAddress,
+          city: editCity,
+          state: editState,
+          postal_code: editPostalCode,
+          description: editDescription,
+          specialty: editSpecialty,
+          category_id: editCategoryId,
+          pix_key: editPixKey
+        };
+        const updatedProvidersList = providers.map(p => p.id === editingUserId ? updatedProvider : p);
+        dbMemory.save('sev_providers', updatedProvidersList);
+
+        if (isRealSupabase && supabase) {
+          const { error: prErr } = await supabase.from('sev_providers').upsert(updatedProvider);
+          if (prErr) console.error('Error saving provider in Supabase:', prErr.message);
+        }
+      }
+    }
+
+    dbMemory.addAuditLog('user-admin', 'admin@severinu.com', 'Edição de usuário', `Perfil de ${matchedProfile.role} (ID: ${editingUserId}) foi editado pelo administrador`);
+    alert('Informações de cadastro e senha salvas com sucesso!');
+    setEditingUserId(null);
+    loadAdminData(true);
+  };
+
+  const handleDeleteUser = async (userId: string, role: string) => {
+    if (!confirm(`Tem certeza de que deseja APAGAR permanentemente este ${role === 'client' ? 'Cliente' : 'Prestador'} e remover todos os dados associados a ele no sistema? Esta ação é irreversível!`)) {
+      return;
+    }
+
+    const matchedProfile = profiles.find(p => p.id === userId);
+    if (!matchedProfile) return;
+
+    // 1. Delete from Profile
+    const updatedProfilesList = profiles.filter(p => p.id !== userId);
+    dbMemory.save('sev_profiles', updatedProfilesList);
+
+    if (isRealSupabase && supabase) {
+      const { error: pErr } = await supabase.from('sev_profiles').delete().eq('id', userId);
+      if (pErr) console.error('Error deleting profile in Supabase:', pErr.message);
+    }
+
+    // 2. Delete from custom table
+    if (role === 'client') {
+      const updatedClientsList = clients.filter(c => c.id !== userId);
+      dbMemory.save('sev_clients', updatedClientsList);
+
+      if (isRealSupabase && supabase) {
+        const { error: cErr } = await supabase.from('sev_clients').delete().eq('id', userId);
+        if (cErr) console.error('Error deleting client in Supabase:', cErr.message);
+      }
+    } else if (role === 'provider') {
+      const updatedProvidersList = providers.filter(p => p.id !== userId);
+      dbMemory.save('sev_providers', updatedProvidersList);
+
+      if (isRealSupabase && supabase) {
+        const { error: prErr } = await supabase.from('sev_providers').delete().eq('id', userId);
+        if (prErr) console.error('Error deleting provider in Supabase:', prErr.message);
+      }
+    }
+
+    dbMemory.addAuditLog('user-admin', 'admin@severinu.com', 'Exclusão de usuário', `Exclusão permanente do usuário ${matchedProfile.full_name} (${role})`);
+    alert(`${role === 'client' ? 'Cliente' : 'Prestador'} excluído permanentemente com sucesso!`);
+    loadAdminData(true);
+  };
+
   // Load all databases from localStorage or directly from Supabase
-  const loadAdminData = async () => {
+  const loadAdminData = async (syncSettings: boolean = false) => {
     // 1. Instant fallback to local state
     setProfiles(dbMemory.get<Profile[]>('sev_profiles') || []);
     setClients(dbMemory.get<ClientProfile[]>('sev_clients') || []);
@@ -52,21 +241,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
     setCategories(dbMemory.get<Category[]>('sev_categories') || []);
     setServiceRequests(dbMemory.get<ServiceRequest[]>('sev_requests') || []);
 
-    const savedSettings = dbMemory.get<SystemSettings[]>('sev_system_settings');
-    if (savedSettings && savedSettings.length > 0) {
-      setSettings(savedSettings[0]);
-    } else {
-      const defaultSettings: SystemSettings = {
-        id: 'settings-1',
-        marketing_text: 'Severinu Service - Simplificando serviços, multiplicando conexões.',
-        commission_rate_percent: 0,
-        support_whatsapp: '5511999999999',
-        pix_recipient_name: 'Severinu Marketplace',
-        pix_recipient_city: 'Sao Paulo',
-        pix_recipient_key: 'financeiro@severinu.com'
-      };
-      dbMemory.save('sev_system_settings', [defaultSettings]);
-      setSettings(defaultSettings);
+    if (syncSettings) {
+      const savedSettings = dbMemory.get<SystemSettings[]>('sev_system_settings');
+      if (savedSettings && savedSettings.length > 0) {
+        setSettings(savedSettings[0]);
+      } else {
+        const defaultSettings: SystemSettings = {
+          id: 'settings-1',
+          marketing_text: 'Severinu Service - Simplificando serviços, multiplicando conexões.',
+          commission_rate_percent: 0,
+          support_whatsapp: '5511999999999',
+          pix_recipient_name: 'Severinu Marketplace',
+          pix_recipient_city: 'Sao Paulo',
+          pix_recipient_key: 'financeiro@severinu.com'
+        };
+        dbMemory.save('sev_system_settings', [defaultSettings]);
+        setSettings(defaultSettings);
+      }
     }
 
     // 2. Fetch directly from Supabase when connected to database
@@ -98,7 +289,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
           fetchTable('sev_financial_logs'),
           fetchTable('sev_categories'),
           fetchTable('sev_requests'),
-          fetchTable('sev_system_settings')
+          syncSettings ? fetchTable('sev_system_settings') : Promise.resolve(null)
         ]);
 
         if (supProfiles) {
@@ -129,7 +320,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
           setServiceRequests(supRequests);
           localStorage.setItem('sev_requests', JSON.stringify(supRequests));
         }
-        if (supSettings && supSettings.length > 0) {
+        if (syncSettings && supSettings && supSettings.length > 0) {
           setSettings(supSettings[0]);
           localStorage.setItem('sev_system_settings', JSON.stringify(supSettings));
         }
@@ -140,10 +331,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
   };
 
   useEffect(() => {
-    loadAdminData();
+    loadAdminData(true);
     // Periodical update sync for real-time changes
     const timer = setInterval(() => {
-      loadAdminData();
+      loadAdminData(false);
     }, 5000);
     return () => clearInterval(timer);
   }, []);
@@ -224,7 +415,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
     dbMemory.save('sev_system_settings', [settings]);
     dbMemory.addAuditLog('user-admin', 'admin@severinu.com', 'Alteração financeira', 'Configurações de sistema atualizadas');
     alert('Configurações financeiras e chaves administrativas salvas com sucesso!');
-    loadAdminData();
+    loadAdminData(true);
   };
 
   // Add Category
@@ -326,9 +517,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
           </div>
 
           {/* Connected Admin tag */}
-          <div className="px-6 py-3 bg-neutral-950/20 text-[10px] text-neutral-500 font-bold flex items-center gap-1.5 border-b border-neutral-850">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
-            Sessão Ativa: admin@severinu.com
+          <div className="px-6 py-3 bg-neutral-950/20 text-[10px] text-neutral-500 font-bold flex items-center justify-between border-b border-neutral-850">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
+              Sessão Activada: admin@severinu.com
+            </span>
+            <button 
+              onClick={() => handleOpenEditModal('user-admin')}
+              className="text-emerald-500 hover:text-emerald-400 hover:underline font-bold transition-all ml-1 bg-neutral-800 px-2.5 py-1 rounded text-[9px] flex items-center gap-0.5"
+            >
+              <Key className="w-2.5 h-2.5" /> Editar Senha
+            </button>
           </div>
 
           {/* Navigation Links */}
@@ -541,21 +740,37 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
                               </span>
                             </td>
                             <td className="p-4 text-center">
-                              {isSuspended ? (
+                              <div className="flex items-center justify-center gap-2">
+                                {isSuspended ? (
+                                  <button
+                                    onClick={() => handleToggleClientStatus(client.id)}
+                                    className="py-1 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 rounded-lg text-[10px] font-bold border border-emerald-200 transition-colors"
+                                  >
+                                    Reabilitar
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => handleToggleClientStatus(client.id)}
+                                    className="py-1 px-2.5 bg-neutral-50 hover:bg-neutral-100 text-neutral-600 rounded-lg text-[10px] font-bold border border-neutral-200 transition-colors"
+                                  >
+                                    Suspender
+                                  </button>
+                                )}
+                                
                                 <button
-                                  onClick={() => handleToggleClientStatus(client.id)}
-                                  className="py-1 px-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 rounded-lg text-[10px] font-bold border border-emerald-200 transition-colors"
+                                  onClick={() => handleOpenEditModal(client.id)}
+                                  className="py-1 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[10px] font-bold border border-indigo-200 transition-colors"
                                 >
-                                  Reabilitar Cliente
+                                  Editar
                                 </button>
-                              ) : (
+                                
                                 <button
-                                  onClick={() => handleToggleClientStatus(client.id)}
-                                  className="py-1 px-3 bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 rounded-lg text-[10px] font-bold border border-rose-250 transition-colors"
+                                  onClick={() => handleDeleteUser(client.id, 'client')}
+                                  className="py-1 px-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[10px] font-bold border border-rose-200 transition-colors flex items-center justify-center gap-0.5"
                                 >
-                                  Suspender Conta
+                                  <Trash2 className="w-3 h-3" /> Excluir
                                 </button>
-                              )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -714,24 +929,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
                                   : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700 border-neutral-250'
                               }`}
                             >
-                              {isExpanded ? 'Ocultar Serviços' : 'Ver Serviços & Finanças'}
+                              {isExpanded ? 'Ocultar Finanças' : 'Ver Finanças'}
                             </button>
 
                             {prov.status === 'approved' ? (
                               <button
                                 onClick={() => handleVerifyProvider(prov.id, 'blocked')}
-                                className="bg-neutral-50 hover:bg-rose-50 text-neutral-600 hover:text-rose-700 text-xs py-1.5 px-3.5 rounded-lg font-bold border border-neutral-250 transition-colors w-full lg:w-auto text-center"
+                                className="bg-neutral-50 hover:bg-rose-50 text-neutral-600 hover:text-rose-750 text-xs py-1.5 px-3 rounded-lg font-bold border border-neutral-250 transition-colors text-center"
                               >
-                                Bloquear Conta
+                                Bloquear
                               </button>
                             ) : (
                               <button
                                 onClick={() => handleVerifyProvider(prov.id, 'approved')}
-                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs py-1.5 px-3.5 rounded-lg font-bold border border-emerald-250 transition-colors w-full lg:w-auto text-center"
+                                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-600 text-xs py-1.5 px-3 rounded-lg font-bold border border-emerald-250 transition-colors text-center"
                               >
-                                Reabilitar Fornecedor
+                                Reabilitar
                               </button>
                             )}
+
+                            <button
+                              onClick={() => handleOpenEditModal(prov.id)}
+                              className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs py-1.5 px-3 rounded-lg font-bold border border-indigo-200 transition-colors text-center"
+                            >
+                              Editar
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteUser(prov.id, 'provider')}
+                              className="bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs py-1.5 px-3 rounded-lg font-bold border border-rose-200 transition-colors text-center flex items-center justify-center gap-1"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Excluir
+                            </button>
                           </div>
                         </div>
 
@@ -1108,6 +1337,159 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
         )}
 
       </main>
+
+      {editingUserId && (
+        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl border border-neutral-100 flex flex-col my-8">
+            <div className="p-5 border-b border-neutral-150 flex items-center justify-between bg-neutral-50">
+              <h3 className="font-black text-neutral-900 text-xs sm:text-sm uppercase flex items-center gap-2">
+                <Shield className="w-4 h-4 text-emerald-600" />
+                Editar Cadastro & Credenciais
+              </h3>
+              <button
+                onClick={() => setEditingUserId(null)}
+                className="text-neutral-400 hover:text-neutral-700 text-xs font-bold"
+              >
+                X Fechar
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveUserSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">Nome Completo *</label>
+                  <input required type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900 font-semibold" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">E-mail de Login *</label>
+                  <input required type="email" value={editEmail} onChange={e => setEditEmail(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900 font-semibold" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-neutral-900 uppercase block mb-1">Senha de Acesso (Editável) *</label>
+                <input required type="text" value={editPassword} onChange={e => setEditPassword(e.target.value)} className="w-full p-2 border border-neutral-300 rounded-lg font-mono font-bold text-xs focus:outline-none focus:border-neutral-900 bg-neutral-50 text-indigo-900 text-center" />
+              </div>
+
+              {/* CLIENT DETAILS */}
+              {profiles.find(p => p.id === editingUserId)?.role === 'client' && (
+                <div className="space-y-4 pt-2 border-t border-neutral-100">
+                  <h4 className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Dados Específicos do Cliente</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">WhatsApp *</label>
+                      <input required type="text" value={editPhone} onChange={e => setEditPhone(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">CPF *</label>
+                      <input required type="text" value={editCpfCnpj} onChange={e => setEditCpfCnpj(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">CEP</label>
+                      <input type="text" value={editPostalCode} onChange={e => setEditPostalCode(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">Cidade</label>
+                      <input type="text" value={editCity} onChange={e => setEditCity(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">Estado (UF)</label>
+                      <input type="text" value={editState} onChange={e => setEditState(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">Endereço</label>
+                      <input type="text" value={editAddress} onChange={e => setEditAddress(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* PROVIDER DETAILS */}
+              {profiles.find(p => p.id === editingUserId)?.role === 'provider' && (
+                <div className="space-y-4 pt-2 border-t border-neutral-100">
+                  <h4 className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Dados Específicos do Prestador</h4>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">WhatsApp *</label>
+                      <input required type="text" value={editPhone} onChange={e => setEditPhone(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">CPF ou CNPJ *</label>
+                      <input required type="text" value={editCpfCnpj} onChange={e => setEditCpfCnpj(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">Chave PIX Recebedora *</label>
+                      <input required type="text" value={editPixKey} onChange={e => setEditPixKey(e.target.value)} className="w-full p-2 text-xs border border-neutral-250 font-mono text-indigo-700 bg-indigo-50/20 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">Selecione Categoria *</label>
+                      <select required value={editCategoryId} onChange={e => setEditCategoryId(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900">
+                        <option value="">Selecione...</option>
+                        {categories.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">Especialidade Direta *</label>
+                      <input required type="text" value={editSpecialty} onChange={e => setEditSpecialty(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">CEP</label>
+                      <input type="text" value={editPostalCode} onChange={e => setEditPostalCode(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">Cidade Atuação</label>
+                      <input type="text" value={editCity} onChange={e => setEditCity(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">Estado (UF)</label>
+                      <input type="text" value={editState} onChange={e => setEditState(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold text-neutral-400 uppercase block mb-1">Descrição Comercial</label>
+                    <textarea rows={2} value={editDescription} onChange={e => setEditDescription(e.target.value)} className="w-full p-2 text-xs border border-neutral-200 rounded-lg focus:outline-none focus:border-neutral-900" />
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingUserId(null)}
+                  className="flex-1 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-xs rounded-xl transition-all"
+                >
+                  Salvar Alterações
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

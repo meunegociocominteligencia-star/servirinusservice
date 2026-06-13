@@ -243,9 +243,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="text-xs font-bold text-neutral-500 hover:text-neutral-900 transition-colors"
+                className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors py-2 px-3 hover:bg-rose-50 rounded-lg flex items-center gap-1"
               >
-                Voltar à Busca
+                Sair da Conta
               </button>
             )}
 

@@ -13,7 +13,7 @@ import {
   Profile, ProviderProfile, ClientProfile, AuditLog, FinancialLog, 
   SystemSettings, Category, ServiceRequest
 } from '../types';
-import { dbMemory, providerService } from '../supabase-service';
+import { dbMemory, providerService, isRealSupabase, supabase } from '../supabase-service';
 import { ProviderDetailsSection } from './ProviderDetailsSection';
 
 interface AdminDashboardProps {
@@ -41,8 +41,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
   const [newCatName, setNewCatName] = useState('');
   const [newCatDesc, setNewCatDesc] = useState('');
 
-  // Load all databases from localStorage
-  const loadAdminData = () => {
+  // Load all databases from localStorage or directly from Supabase
+  const loadAdminData = async () => {
+    // 1. Instant fallback to local state
     setProfiles(dbMemory.get<Profile[]>('sev_profiles') || []);
     setClients(dbMemory.get<ClientProfile[]>('sev_clients') || []);
     setProviders(dbMemory.get<ProviderProfile[]>('sev_providers') || []);
@@ -67,24 +68,105 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
       dbMemory.save('sev_system_settings', [defaultSettings]);
       setSettings(defaultSettings);
     }
+
+    // 2. Fetch directly from Supabase when connected to database
+    if (isRealSupabase && supabase) {
+      try {
+        const fetchTable = async (table: string) => {
+          const { data, error } = await supabase.from(table).select('*');
+          if (error) {
+            console.error(`AdminDashboard failed to load from Supabase table [${table}]:`, error.message);
+            return null;
+          }
+          return data;
+        };
+
+        const [
+          supProfiles,
+          supClients,
+          supProviders,
+          supAuditLogs,
+          supFinancialLogs,
+          supCategories,
+          supRequests,
+          supSettings
+        ] = await Promise.all([
+          fetchTable('sev_profiles'),
+          fetchTable('sev_clients'),
+          fetchTable('sev_providers'),
+          fetchTable('sev_audit_logs'),
+          fetchTable('sev_financial_logs'),
+          fetchTable('sev_categories'),
+          fetchTable('sev_requests'),
+          fetchTable('sev_system_settings')
+        ]);
+
+        if (supProfiles) {
+          setProfiles(supProfiles);
+          localStorage.setItem('sev_profiles', JSON.stringify(supProfiles));
+        }
+        if (supClients) {
+          setClients(supClients);
+          localStorage.setItem('sev_clients', JSON.stringify(supClients));
+        }
+        if (supProviders) {
+          setProviders(supProviders);
+          localStorage.setItem('sev_providers', JSON.stringify(supProviders));
+        }
+        if (supAuditLogs) {
+          setAuditLogs(supAuditLogs);
+          localStorage.setItem('sev_audit_logs', JSON.stringify(supAuditLogs));
+        }
+        if (supFinancialLogs) {
+          setFinancialLogs(supFinancialLogs);
+          localStorage.setItem('sev_financial_logs', JSON.stringify(supFinancialLogs));
+        }
+        if (supCategories) {
+          setCategories(supCategories);
+          localStorage.setItem('sev_categories', JSON.stringify(supCategories));
+        }
+        if (supRequests) {
+          setServiceRequests(supRequests);
+          localStorage.setItem('sev_requests', JSON.stringify(supRequests));
+        }
+        if (supSettings && supSettings.length > 0) {
+          setSettings(supSettings[0]);
+          localStorage.setItem('sev_system_settings', JSON.stringify(supSettings));
+        }
+      } catch (err) {
+        console.error('Error syncing Supabase in Admin Panel:', err);
+      }
+    }
   };
 
   useEffect(() => {
     loadAdminData();
-    // Periodical update sync for test suite interaction speed
+    // Periodical update sync for real-time changes
     const timer = setInterval(() => {
       loadAdminData();
-    }, 4000);
+    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
   // Toggle client status (Active vs Suspended)
-  const handleToggleClientStatus = (clientId: string) => {
+  const handleToggleClientStatus = async (clientId: string) => {
     const list = dbMemory.get<ClientProfile[]>('sev_clients');
     const matched = list.find(c => c.id === clientId);
     if (!matched) return;
     
     const nextStatus = matched.status === 'active' ? 'suspended' : 'active';
+
+    if (isRealSupabase && supabase) {
+      const { error } = await supabase
+        .from('sev_clients')
+        .update({ status: nextStatus })
+        .eq('id', clientId);
+      if (error) {
+        alert('Erro ao atualizar status no Supabase: ' + error.message);
+        return;
+      }
+    }
+
     const updated = list.map(c => {
       if (c.id === clientId) {
         return { ...c, status: nextStatus };
@@ -125,9 +207,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
   };
 
   // Save Settings
-  const handleSaveSettings = (e: React.FormEvent) => {
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!settings) return;
+
+    if (isRealSupabase && supabase) {
+      const { error } = await supabase
+        .from('sev_system_settings')
+        .upsert(settings);
+      if (error) {
+        alert('Erro ao salvar configurações no Supabase: ' + error.message);
+        return;
+      }
+    }
 
     dbMemory.save('sev_system_settings', [settings]);
     dbMemory.addAuditLog('user-admin', 'admin@severinu.com', 'Alteração financeira', 'Configurações de sistema atualizadas');
@@ -136,7 +228,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
   };
 
   // Add Category
-  const handleAddCategory = (e: React.FormEvent) => {
+  const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCatName.trim()) return;
 
@@ -149,6 +241,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigateHome }
       description: newCatDesc,
       created_at: new Date().toISOString()
     };
+
+    if (isRealSupabase && supabase) {
+      const { error } = await supabase.from('sev_categories').insert(newCategory);
+      if (error) {
+        alert('Erro ao criar categoria no Supabase: ' + error.message);
+        return;
+      }
+    }
 
     const updated = [...categories, newCategory];
     dbMemory.save('sev_categories', updated);

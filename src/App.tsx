@@ -250,62 +250,11 @@ export default function App() {
   const selectedProviderDetail = approvedProviders.find(p => p.id === selectedProviderDetailId);
   const selectedProviderProfile = selectedProviderDetail ? profiles.find(p => p.id === selectedProviderDetail.id) : null;
 
-  const renderSandboxSwitcher = () => (
-    <div className="bg-amber-500 text-neutral-950 py-2.5 px-4 text-center text-xs border-b border-amber-600 font-sans shrink-0">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3 font-semibold">
-        <span className="flex items-center gap-1.5 justify-center md:justify-start">
-          <Shield className="w-4 h-4 text-neutral-900 shrink-0" />
-          <span>
-            <strong>Modo Sandbox Interativo:</strong> Alterne de conta em 1 clique para simular pedidos, propostas e chat!
-          </span>
-        </span>
-
-        <div className="flex items-center gap-2">
-          <label htmlFor="sandbox-user-select" className="text-[11px] font-bold text-neutral-900 uppercase">
-            Simular Conta:
-          </label>
-          <select
-            id="sandbox-user-select"
-            value={currentUser?.email || ''}
-            onChange={(e) => {
-              if (e.target.value) {
-                handleFastLogin(e.target.value);
-              } else {
-                handleLogout();
-              }
-            }}
-            className="bg-neutral-950 text-white rounded-lg px-3 py-1 focus:ring-2 focus:ring-neutral-800 focus:outline-none border-none text-[11px] font-black"
-          >
-            <option value="">-- {currentUser ? 'Clique para Sair' : 'Escolha uma conta para fazer Login'} --</option>
-            <optgroup label="Administrador do Portal">
-              <option value="admin@severinu.com">Gustavo Santos (Supervisor Admin)</option>
-            </optgroup>
-            <optgroup label="Clientes (Fazem solicitações de orçamento)">
-              <option value="joao.silva@gmail.com">João Silva (Cliente 1)</option>
-              <option value="marina.souza@gmail.com">Marina Souza (Cliente 2)</option>
-              <option value="lucas.oliveira@gmail.com">Lucas Oliveira (Cliente 3)</option>
-              <option value="patricia.alves@gmail.com">Patrícia Alves (Cliente 4)</option>
-              <option value="roberto.mendes@gmail.com">Roberto Mendes (Cliente 5)</option>
-            </optgroup>
-            <optgroup label="Prestadores (Enviam lances / propostas)">
-              <option value="carlos.moraes@outlook.com">Carlos Moraes (Eletricista)</option>
-              <option value="elena.rodrigues@hotmail.com">Elena Rodrigues (Diarista)</option>
-              <option value="marcus.thorn@gmail.com">Marcos de Souza (Encanador)</option>
-              <option value="ricardo.pintura@gmail.com">Ricardo Oliveira (Pintor)</option>
-              <option value="fernanda.jardim@gmail.com">Fernanda Lima (Jardineira)</option>
-            </optgroup>
-          </select>
-        </div>
-      </div>
-    </div>
-  );
-
   // Header and layout transitions
   if (currentUser) {
     return (
       <div className="min-h-screen bg-white text-neutral-800 font-sans flex flex-col selection:bg-emerald-100">
         <SupabaseDiagnosticsPanel />
-        {renderSandboxSwitcher()}
         {currentUser.role === 'client' && (
           <ClientDashboard 
             currentUser={currentUser} 
@@ -331,9 +280,6 @@ export default function App() {
       {/* Supabase Cloud Connection Diagnostics Indicator */}
       <SupabaseDiagnosticsPanel />
       
-      {/* 🛠️ AI STUDIO SANDBOX DEMO SWITCHER BAR */}
-      {renderSandboxSwitcher()}
-
       {/* Navigation Menu header */}
       <nav className="bg-white border-b border-neutral-100 py-4 px-6 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -597,9 +543,11 @@ export default function App() {
               {/* LOGIN FLOW */}
               {authModal === 'login' && (
                 <form onSubmit={handleLoginSubmit} className="space-y-4">
-                  <div className="bg-amber-50 p-3 rounded-lg text-[10px] text-amber-900 border border-amber-200">
-                    <strong>Sugestão para Onboarding de Testes:</strong><br />
-                    Use e-mails fictícios pré-configurados clicando na barra amarela superior no topo da tela para realizar a revisão dos painéis instantaneamente sem cadastros!
+                  <div className="bg-neutral-50 p-3 rounded-lg text-[10px] text-neutral-600 border border-neutral-200">
+                    <strong>Contas Cadastradas para Testes:</strong><br />
+                    • Administrador: <span className="font-mono text-neutral-800 font-bold">admin@severinu.com</span><br />
+                    • Cliente: <span className="font-mono text-neutral-800 font-bold">joao.silva@gmail.com</span><br />
+                    • Prestador: <span className="font-mono text-neutral-800 font-bold">carlos.moraes@outlook.com</span>
                   </div>
 
                   <div>
@@ -892,7 +840,7 @@ export default function App() {
                     setSelectedProviderDetailId(null);
                     // Open register/login modal or alert instructions
                     setAuthModal('login');
-                    alert('Como você não está logado no momento, por favor efetue seu login usando um dos "Atalhos Rápidos" para simular a contratação em tempo real no dashboard de cliente!');
+                    alert('Como você não está logado no momento, por favor efetue seu login usando um dos e-mails sugeridos ou sua conta cadastrada para simular a contratação em tempo real!');
                   }}
                   className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg"
                 >

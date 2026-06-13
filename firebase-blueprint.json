@@ -1,0 +1,254 @@
+{
+  "entities": {
+    "Category": {
+      "title": "Category",
+      "description": "Category schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "icon_name": { "type": "string" },
+        "description": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "name", "slug", "icon_name"]
+    },
+    "SubscriptionPlan": {
+      "title": "SubscriptionPlan",
+      "description": "Subscription plan schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "price": { "type": "number" },
+        "duration_days": { "type": "integer" },
+        "features": { "type": "array" }
+      },
+      "required": ["id", "name", "price", "duration_days"]
+    },
+    "Profile": {
+      "title": "Profile",
+      "description": "User profile schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "full_name": { "type": "string" },
+        "avatar_url": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "email", "role", "full_name"]
+    },
+    "ClientProfile": {
+      "title": "ClientProfile",
+      "description": "Client Profile schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "cpf": { "type": "string" },
+        "birth_date": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "postal_code": { "type": "string" },
+        "rating_score": { "type": "number" },
+        "status": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "whatsapp", "city", "state"]
+    },
+    "ProviderProfile": {
+      "title": "ProviderProfile",
+      "description": "Provider Profile schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "cpf_cnpj": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "postal_code": { "type": "string" },
+        "category_id": { "type": "string" },
+        "specialty": { "type": "string" },
+        "description": { "type": "string" },
+        "pix_key": { "type": "string" },
+        "gallery_urls": { "type": "array" },
+        "document_url": { "type": "string" },
+        "residence_proof_url": { "type": "string" },
+        "status": { "type": "string" },
+        "rating_average": { "type": "number" },
+        "total_reviews": { "type": "integer" },
+        "total_completed_services": { "type": "integer" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "whatsapp", "category_id", "pix_key"]
+    },
+    "ServiceRequest": {
+      "title": "ServiceRequest",
+      "description": "Service request schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "client_id": { "type": "string" },
+        "provider_id": { "type": "string" },
+        "category_id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "photos_urls": { "type": "array" },
+        "suggested_value": { "type": "number" },
+        "final_value": { "type": "number" },
+        "scheduled_date": { "type": "string" },
+        "status": { "type": "string" },
+        "status_payment": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "client_id", "category_id", "title", "status"]
+    },
+    "ServiceBid": {
+      "title": "ServiceBid",
+      "description": "Service bid schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "request_id": { "type": "string" },
+        "provider_id": { "type": "string" },
+        "value": { "type": "number" },
+        "message": { "type": "string" },
+        "status": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "request_id", "provider_id", "value"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Payment schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "request_id": { "type": "string" },
+        "amount": { "type": "number" },
+        "pix_key_recipient": { "type": "string" },
+        "qr_code_base64": { "type": "string" },
+        "pix_copy_paste": { "type": "string" },
+        "status": { "type": "string" },
+        "paid_at": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "request_id", "amount", "status"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Review schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "request_id": { "type": "string" },
+        "reviewer_id": { "type": "string" },
+        "target_id": { "type": "string" },
+        "type": { "type": "string" },
+        "rating": { "type": "integer" },
+        "comment": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "request_id", "reviewer_id", "target_id", "rating"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Conversation schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "client_id": { "type": "string" },
+        "provider_id": { "type": "string" },
+        "last_message_text": { "type": "string" },
+        "updated_at": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "client_id", "provider_id"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Message schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "conversation_id": { "type": "string" },
+        "sender_id": { "type": "string" },
+        "text": { "type": "string" },
+        "is_read": { "type": "boolean" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "conversation_id", "sender_id"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Notification schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" },
+        "is_read": { "type": "boolean" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "user_id", "title", "message"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "AuditLog schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "user_id": { "type": "string" },
+        "user_email": { "type": "string" },
+        "action": { "type": "string" },
+        "ip": { "type": "string" },
+        "browser": { "type": "string" },
+        "details": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "action"]
+    },
+    "FinancialLog": {
+      "title": "FinancialLog",
+      "description": "FinancialLog schema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "type": { "type": "string" },
+        "provider_id": { "type": "string" },
+        "amount": { "type": "number" },
+        "payment_method": { "type": "string" },
+        "reference_id": { "type": "string" },
+        "status": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["id", "type", "amount", "status"]
+    }
+  },
+  "firestore": {
+    "/sev_categories/{id}": { "schema": "Category", "description": "System job categories" },
+    "/sev_plans/{id}": { "schema": "SubscriptionPlan", "description": "Provider subscription plans" },
+    "/sev_profiles/{id}": { "schema": "Profile", "description": "Users primary profiles" },
+    "/sev_clients/{id}": { "schema": "ClientProfile", "description": "Client profiles info" },
+    "/sev_providers/{id}": { "schema": "ProviderProfile", "description": "Provider profiles info" },
+    "/sev_requests/{id}": { "schema": "ServiceRequest", "description": "Client requested services" },
+    "/sev_bids/{id}": { "schema": "ServiceBid", "description": "Provider pricing bids on requests" },
+    "/sev_payments/{id}": { "schema": "Payment", "description": "PIX payment log sheets" },
+    "/sev_reviews/{id}": { "schema": "Review", "description": "Platform customer ratings and reviews" },
+    "/sev_conversations/{id}": { "schema": "Conversation", "description": "Chatrooms between client and providers" },
+    "/sev_messages/{id}": { "schema": "Message", "description": "Chat signals sent" },
+    "/sev_notifications/{id}": { "schema": "Notification", "description": "Notification inbox" },
+    "/sev_audit_logs/{id}": { "schema": "AuditLog", "description": "Event log auditing trails" },
+    "/sev_financial_logs/{id}": { "schema": "FinancialLog", "description": "Financial transaction ledger" }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Severinu Service",
+  "description": "Plataforma completa de Marketplace de Prestação de Serviços com Supabase, PIX, dashboards e chat em tempo real.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -16,3 +16,4 @@ WHERE password IS NULL;
 -- 3. (Optional) Informational feedback
 -- This ensures all users can now log in using '123456' as their initial placeholder password, 
 -- which they or the administrator can change in the app panels.
+

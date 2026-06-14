@@ -27,10 +27,16 @@ jobs:
       with:
         gradle-version: '8.2'
 
+    - name: Gerar e Configurar Gradle Wrapper
+      run: |
+        cd android
+        gradle wrapper --gradle-version 8.2
+        chmod +x gradlew
+
     - name: Compilar APK de Teste (Debug)
       run: |
         cd android
-        gradle assembleDebug
+        ./gradlew assembleDebug
 
     - name: Disponibilizar APK para Download (Upload Artifact)
       uses: actions/upload-artifact@v4

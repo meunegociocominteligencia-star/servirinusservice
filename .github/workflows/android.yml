@@ -22,21 +22,12 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Configurar Gradle
+    - name: Compilar APK com Gradle Action
       uses: gradle/actions/setup-gradle@v3
       with:
         gradle-version: '8.2'
-
-    - name: Gerar e Configurar Gradle Wrapper
-      run: |
-        cd android
-        gradle wrapper --gradle-version 8.2
-        chmod +x gradlew
-
-    - name: Compilar APK de Teste (Debug)
-      run: |
-        cd android
-        ./gradlew assembleDebug
+        build-root-directory: android
+        arguments: assembleDebug
 
     - name: Disponibilizar APK para Download (Upload Artifact)
       uses: actions/upload-artifact@v4

@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Fundo verde esmeralda idêntico ao tema do Severinu (#10B981) -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M0,0h108v108h-108z" />
+    
+    <!-- Círculo central branco de contraste -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,20c-18.78,0 -34,15.22 -34,34s15.22,34 34,34s34,-15.22 34,-34s-15.22,-34 -34,-34z" />
+    
+    <!-- Ícone de check de serviço em verde brilhante (#10B981) para o Severinu -->
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M49.2,65.6l-11.8,-11.8c-0.8,-0.8 -0.8,-2 0,-2.8l2.8,-2.8c0.8,-0.8 2,-0.8 2.8,0l7.6,7.6l16.2,-16.2c0.8,-0.8 2,-0.8 2.8,0l2.8,2.8c0.8,0.8 0.8,2 0,2.8l-20.4,20.4c-0.8,0.8 -2,0.8 -2.8,0z" />
+</vector>

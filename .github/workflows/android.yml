@@ -22,12 +22,19 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Compilar APK com Gradle Action
+    - name: Configurar Gradle (Sem Cache)
       uses: gradle/actions/setup-gradle@v3
       with:
         gradle-version: '8.2'
-        build-root-directory: android
-        arguments: assembleDebug
+        cache-disabled: true
+
+    - name: Construir Wrapper e Compilar APK
+      run: |
+        cd android
+        # Gerar o jar do wrapper que está ausente no repositório
+        gradle wrapper --gradle-version 8.2
+        chmod +x gradlew
+        ./gradlew assembleDebug --stacktrace
 
     - name: Disponibilizar APK para Download (Upload Artifact)
       uses: actions/upload-artifact@v4

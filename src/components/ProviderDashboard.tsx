@@ -8,7 +8,7 @@ import {
   ProviderSubscription, Review, Category, Conversation, ServiceBid
 } from '../types';
 import { 
-  dbMemory, serviceRequestService, providerService, chatService, reviewService, serviceBidService
+  dbMemory, serviceRequestService, providerService, chatService, reviewService, serviceBidService, authService
 } from '../supabase-service';
 import { ChatComponent } from './ChatComponent';
 import { PixPaymentModal } from './PixPaymentModal';
@@ -16,11 +16,13 @@ import { PixPaymentModal } from './PixPaymentModal';
 interface ProviderDashboardProps {
   currentUser: Profile;
   onNavigateHome?: () => void;
+  onProfileUpdate?: () => void;
 }
 
 export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
   currentUser,
-  onNavigateHome
+  onNavigateHome,
+  onProfileUpdate
 }) => {
   // Database states
   const [providerProfile, setProviderProfile] = useState<ProviderProfile | null>(null);
@@ -42,6 +44,52 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
   const [biddingReqId, setBiddingReqId] = useState<string | null>(null);
   const [bidValue, setBidValue] = useState<number>(100);
   const [bidMessage, setBidMessage] = useState<string>('');
+
+  // Profile editing states
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editFullName, setEditFullName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editAddress, setEditAddress] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editState, setEditState] = useState('');
+  const [editPostalCode, setEditPostalCode] = useState('');
+  const [editSpecialty, setEditSpecialty] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPixKey, setEditPixKey] = useState('');
+  const [tempAvatar, setTempAvatar] = useState('');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editFullName.trim() || !editPhone.trim() || !editAddress.trim() || !editCity.trim() || !editState.trim() || !editPostalCode.trim() || !editSpecialty.trim() || !editDescription.trim() || !editPixKey.trim()) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+    setIsSavingProfile(true);
+    try {
+      await authService.updateProfile(currentUser.id, 'provider', {
+        fullName: editFullName,
+        avatarUrl: tempAvatar || undefined,
+        whatsapp: editPhone,
+        address: editAddress,
+        city: editCity,
+        state: editState,
+        postalCode: editPostalCode,
+        specialty: editSpecialty,
+        description: editDescription,
+        pixKey: editPixKey
+      });
+      setIsEditingProfile(false);
+      if (onProfileUpdate) {
+        onProfileUpdate();
+      }
+      alert('Seu perfil de prestador foi atualizado com sucesso!');
+    } catch (err: any) {
+      alert('Erro ao atualizar perfil: ' + err.message);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   const loadProviderDashboardData = async () => {
     const allProviders = dbMemory.get<ProviderProfile[]>('sev_providers');
@@ -213,6 +261,27 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           </div>
 
           <div className="flex gap-2.5 justify-center w-full sm:w-auto">
+            <button
+              onClick={() => {
+                if (providerProfile) {
+                  setEditPhone(providerProfile.whatsapp);
+                  setEditAddress(providerProfile.address);
+                  setEditCity(providerProfile.city);
+                  setEditState(providerProfile.state);
+                  setEditPostalCode(providerProfile.postal_code);
+                  setEditSpecialty(providerProfile.specialty);
+                  setEditDescription(providerProfile.description);
+                  setEditPixKey(providerProfile.pix_key);
+                }
+                setEditFullName(currentUser.full_name);
+                setTempAvatar(currentUser.avatar_url || '');
+                setIsEditingProfile(true);
+              }}
+              className="text-xs font-bold text-neutral-700 hover:text-neutral-900 transition-colors py-2 px-3 hover:bg-neutral-100 rounded-lg flex items-center gap-1.5 whitespace-nowrap border border-neutral-200 shadow-3xs cursor-pointer animate-fade-in"
+            >
+              <User className="w-3.5 h-3.5 text-neutral-500" /> Editar Perfil
+            </button>
+
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
@@ -638,6 +707,218 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
           onPaymentSuccess={handleSubscribeSuccess}
           onClose={() => setIsUpgradingPlan(null)}
         />
+      )}
+
+      {/* Floating Edit Provider Profile Modal */}
+      {isEditingProfile && (
+        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in overflow-y-auto">
+          <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-2xl w-full max-w-lg relative animate-in scale-in duration-200">
+            <div className="flex items-center justify-between mb-4 border-b border-neutral-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-neutral-100 text-neutral-800 flex items-center justify-center font-bold">
+                  👷
+                </div>
+                <h3 className="text-xs font-black text-neutral-900 uppercase tracking-wide">Atualizar Meu Perfil de Prestador</h3>
+              </div>
+              <button 
+                onClick={() => setIsEditingProfile(false)}
+                className="text-neutral-400 hover:text-neutral-700 font-extrabold text-xs px-2.5 py-1 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                X Fechar
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              {/* Photo upload block */}
+              <div className="flex flex-col items-center gap-3 bg-neutral-50 p-4 rounded-xl border border-neutral-200/60 mb-1">
+                <span className="text-[10px] uppercase font-black text-neutral-400 tracking-wider">Foto de Perfil Profissional (Arraste ou Selecione)</span>
+                <div className="relative group">
+                  <div className="w-20 h-20 rounded-full border-2 border-neutral-300 overflow-hidden bg-white shadow-sm flex items-center justify-center">
+                    {tempAvatar ? (
+                      <img src={tempAvatar} referrerPolicy="no-referrer" alt="Avatar preview" className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-neutral-100 text-neutral-300 rounded-full">
+                        <User className="w-8 h-8" />
+                      </div>
+                    )}
+                  </div>
+                  {/* Photo mini badge indicators */}
+                  <label htmlFor="android-provider-avatar-upload" className="absolute bottom-0 right-0 w-8 h-8 bg-neutral-950 hover:bg-neutral-800 text-white rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-colors border-2 border-white">
+                    <span className="text-xs font-bold">📸</span>
+                  </label>
+                  <input 
+                    id="android-provider-avatar-upload"
+                    type="file" 
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setTempAvatar(reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 w-full max-w-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('android-provider-avatar-upload');
+                      if (el) el.click();
+                    }}
+                    className="w-full py-2 px-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold rounded-lg text-[10px] uppercase cursor-pointer transition-all border border-neutral-300 flex items-center justify-center gap-1.5 min-h-[38px]"
+                  >
+                    <span>📱 Abrir Galeria / Câmera (Android)</span>
+                  </button>
+                  <span className="text-[9px] text-neutral-400 text-center font-medium">Toque acima para escolher fotos no celular</span>
+                </div>
+                
+                {/* Drag-and-drop feedback/area */}
+                <div className="w-full border border-dashed border-neutral-300 rounded-lg p-2 text-center hover:bg-neutral-100 transition-all cursor-pointer relative">
+                  <span className="text-[10px] font-bold text-neutral-500">
+                    Ou cole uma URL direta de imagem abaixo:
+                  </span>
+                  <input 
+                    type="text" 
+                    placeholder="Cole a URL da sua foto (opcional)..." 
+                    value={tempAvatar}
+                    onChange={(e) => setTempAvatar(e.target.value)}
+                    className="w-full text-[11px] p-2 mt-1.5 border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-950 font-mono bg-white text-neutral-750"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Nome Completo</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Seu nome profissional..."
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">WhatsApp / Celular de Contato</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Apenas números com DDD..."
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Endereço de Base</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Sua rua, número..."
+                    value={editAddress}
+                    onChange={(e) => setEditAddress(e.target.value)}
+                    className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Cidade de Atendimento</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Sua cidade principal..."
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                    className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Estado</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={2}
+                    placeholder="UF (Ex: RJ)..."
+                    value={editState}
+                    onChange={(e) => setEditState(e.target.value.toUpperCase())}
+                    className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800 text-center"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">CEP</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ex: 20000-000..."
+                    value={editPostalCode}
+                    onChange={(e) => setEditPostalCode(e.target.value)}
+                    className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Chave PIX para Receber Pagamentos</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Sua chave PIX para faturamento..."
+                    value={editPixKey}
+                    onChange={(e) => setEditPixKey(e.target.value)}
+                    className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800 text-purple-900 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Sua Especialidade Principal</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Reparos rápidos de vazamentos, montagem de closets..."
+                  value={editSpecialty}
+                  onChange={(e) => setEditSpecialty(e.target.value)}
+                  className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Descrição Detalhada do seu Trabalho</label>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="Fale um pouco sobre sua experiência, ferramentas utilizadas e diferenciais do seu atendimento..."
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-medium text-neutral-800"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSavingProfile}
+                className="w-full py-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-extrabold text-xs transition-all shadow-md active:scale-98 tracking-wider uppercase cursor-pointer flex items-center justify-center gap-1"
+              >
+                {isSavingProfile ? (
+                  <span>Salvando Dados...</span>
+                ) : (
+                  <span>Salvar Dados e Foto</span>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

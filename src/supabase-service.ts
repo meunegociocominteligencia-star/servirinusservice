@@ -1028,6 +1028,123 @@ export const authService = {
 
     dbMemory.setCurrentUser(matched);
     return matched;
+  },
+
+  async updateProfile(userId: string, role: 'client' | 'provider', fields: {
+    fullName: string;
+    avatarUrl?: string;
+    whatsapp: string;
+    address: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    specialty?: string;
+    description?: string;
+    pixKey?: string;
+  }): Promise<Profile> {
+    const cleanWhatsapp = fields.whatsapp.replace(/\D/g, '');
+
+    if (isRealSupabase && supabase) {
+      // 1. Update sev_profiles
+      const { error: pError } = await supabase
+        .from('sev_profiles')
+        .update({
+          full_name: fields.fullName,
+          avatar_url: fields.avatarUrl
+        })
+        .eq('id', userId);
+      if (pError) throw new Error(pError.message);
+
+      // 2. Update specific table
+      if (role === 'client') {
+        const { error: cError } = await supabase
+          .from('sev_clients')
+          .update({
+            whatsapp: cleanWhatsapp,
+            address: fields.address,
+            city: fields.city,
+            state: fields.state,
+            postal_code: fields.postalCode
+          })
+          .eq('id', userId);
+        if (cError) throw new Error(cError.message);
+      } else if (role === 'provider') {
+        const { error: prError } = await supabase
+          .from('sev_providers')
+          .update({
+            whatsapp: cleanWhatsapp,
+            address: fields.address,
+            city: fields.city,
+            state: fields.state,
+            postal_code: fields.postalCode,
+            specialty: fields.specialty || '',
+            description: fields.description || '',
+            pix_key: fields.pixKey || ''
+          })
+          .eq('id', userId);
+        if (prError) throw new Error(prError.message);
+      }
+    }
+
+    // Always update local memory / Backup storage
+    const profiles = dbMemory.get<Profile[]>('sev_profiles');
+    const pIdx = profiles.findIndex(p => p.id === userId);
+    if (pIdx !== -1) {
+      profiles[pIdx].full_name = fields.fullName;
+      if (fields.avatarUrl) {
+        profiles[pIdx].avatar_url = fields.avatarUrl;
+      }
+      dbMemory.save('sev_profiles', profiles);
+      
+      // Update active user in session memory if this is the logged user
+      const currentUser = dbMemory.getCurrentUser();
+      if (currentUser && currentUser.id === userId) {
+        const updatedCurrentUser = { 
+          ...currentUser, 
+          full_name: fields.fullName,
+          avatar_url: fields.avatarUrl || currentUser.avatar_url
+        };
+        dbMemory.setCurrentUser(updatedCurrentUser);
+      }
+    }
+
+    if (role === 'client') {
+      const clients = dbMemory.get<ClientProfile[]>('sev_clients');
+      const cIdx = clients.findIndex(c => c.id === userId);
+      if (cIdx !== -1) {
+        clients[cIdx] = {
+          ...clients[cIdx],
+          whatsapp: cleanWhatsapp,
+          address: fields.address,
+          city: fields.city,
+          state: fields.state,
+          postal_code: fields.postalCode
+        };
+        dbMemory.save('sev_clients', clients);
+      }
+    } else if (role === 'provider') {
+      const providers = dbMemory.get<ProviderProfile[]>('sev_providers');
+      const prIdx = providers.findIndex(p => p.id === userId);
+      if (prIdx !== -1) {
+        providers[prIdx] = {
+          ...providers[prIdx],
+          whatsapp: cleanWhatsapp,
+          address: fields.address,
+          city: fields.city,
+          state: fields.state,
+          postal_code: fields.postalCode,
+          specialty: fields.specialty || '',
+          description: fields.description || '',
+          pix_key: fields.pixKey || ''
+        };
+        dbMemory.save('sev_providers', providers);
+      }
+    }
+
+    dbMemory.addAuditLog(userId, fields.fullName, 'Alteração', `Perfil atualizado com sucesso (${role})`);
+
+    const updatedProfiles = dbMemory.get<Profile[]>('sev_profiles');
+    return updatedProfiles.find(p => p.id === userId)!;
   }
 };
 

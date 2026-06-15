@@ -8,19 +8,22 @@ import {
   Message, Conversation, Notification, Review, ServiceBid
 } from '../types';
 import { 
-  dbMemory, serviceRequestService, chatService, reviewService, serviceBidService
+  dbMemory, serviceRequestService, chatService, reviewService, serviceBidService, authService
 } from '../supabase-service';
 import { ChatComponent } from './ChatComponent';
 import { PixPaymentModal } from './PixPaymentModal';
+import { ClientProfile } from '../types';
 
 interface ClientDashboardProps {
   currentUser: Profile;
   onNavigateHome?: () => void;
+  onProfileUpdate?: () => void;
 }
 
 export const ClientDashboard: React.FC<ClientDashboardProps> = ({
   currentUser,
-  onNavigateHome
+  onNavigateHome,
+  onProfileUpdate
 }) => {
   // Database states
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
@@ -58,6 +61,46 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
 
   // Notifications toggle
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Profile editing states
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editFullName, setEditFullName] = useState('');
+  const [editClientPhone, setEditClientPhone] = useState('');
+  const [editClientAddress, setEditClientAddress] = useState('');
+  const [editClientCity, setEditClientCity] = useState('');
+  const [editClientState, setEditClientState] = useState('');
+  const [editClientPostalCode, setEditClientPostalCode] = useState('');
+  const [tempAvatar, setTempAvatar] = useState('');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editFullName.trim() || !editClientPhone.trim() || !editClientAddress.trim() || !editClientCity.trim() || !editClientState.trim() || !editClientPostalCode.trim()) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+    setIsSavingProfile(true);
+    try {
+      await authService.updateProfile(currentUser.id, 'client', {
+        fullName: editFullName,
+        avatarUrl: tempAvatar || undefined,
+        whatsapp: editClientPhone,
+        address: editClientAddress,
+        city: editClientCity,
+        state: editClientState,
+        postalCode: editClientPostalCode
+      });
+      setIsEditingProfile(false);
+      if (onProfileUpdate) {
+        onProfileUpdate();
+      }
+      alert('Seu perfil foi atualizado com sucesso!');
+    } catch (err: any) {
+      alert('Erro ao atualizar perfil: ' + err.message);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   const loadClientDashboardData = async () => {
     const list = await serviceRequestService.listAll();
@@ -240,6 +283,26 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </div>
 
           <div className="flex items-center justify-center sm:justify-end gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => {
+                const allClients = dbMemory.get<ClientProfile[]>('sev_clients');
+                const matched = allClients.find(c => c.id === currentUser.id);
+                if (matched) {
+                  setEditClientPhone(matched.whatsapp);
+                  setEditClientAddress(matched.address);
+                  setEditClientCity(matched.city);
+                  setEditClientState(matched.state);
+                  setEditClientPostalCode(matched.postal_code);
+                }
+                setEditFullName(currentUser.full_name);
+                setTempAvatar(currentUser.avatar_url || '');
+                setIsEditingProfile(true);
+              }}
+              className="text-xs font-bold text-neutral-700 hover:text-neutral-900 transition-colors py-2 px-3 hover:bg-neutral-100 rounded-lg flex items-center gap-1.5 whitespace-nowrap border border-neutral-200 shadow-3xs cursor-pointer"
+            >
+              <User className="w-3.5 h-3.5 text-neutral-500" /> Editar Perfil
+            </button>
+
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
@@ -263,7 +326,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2.5 w-76 bg-white rounded-xl shadow-xl border border-neutral-100 py-2 z-30 max-h-[300px] overflow-y-auto">
+                <div className="absolute sm:right-0 max-sm:fixed max-sm:left-4 max-sm:right-4 max-sm:w-auto max-sm:top-32 mt-2.5 w-76 bg-white rounded-xl shadow-xl border border-neutral-100 py-2 z-40 max-h-[300px] overflow-y-auto">
                   <div className="px-4 py-1.5 border-b border-neutral-100 flex items-center justify-between">
                     <span className="text-[10px] font-bold text-neutral-400 uppercase">Notificações Recentes</span>
                     {notifications.length > 0 && (
@@ -539,95 +602,9 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           </div>
         </div>
 
-        {/* Right Side: Chat panel or Custom solicitar form */}
+        {/* Right Side: Chat panel or Custom support block */}
         <div className="space-y-6">
-          
-          {/* Create Service request block */}
-          {isCreatingRequest ? (
-            <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-md">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-black text-neutral-900 uppercase">Solicitar Novo Serviço</h3>
-                <button 
-                  onClick={() => setIsCreatingRequest(false)}
-                  className="text-neutral-400 hover:text-neutral-700 font-bold text-xs"
-                >
-                  X Fechar
-                </button>
-              </div>
-
-              <form onSubmit={handleCreateRequestSubmit} className="space-y-4">
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Escolher Categoria de Serviço</label>
-                  <select
-                    required
-                    value={selectedCategoryId}
-                    onChange={(e) => setSelectedCategoryId(e.target.value)}
-                    className="w-full text-xs p-2.5 border border-neutral-200 rounded-xl focus:outline-none"
-                  >
-                    <option value="">Selecione a categoria desejada...</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Título do Serviço</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Ex: Trocar fiação do chuveiro, consertar pia..."
-                    value={reqTitle}
-                    onChange={(e) => setReqTitle(e.target.value)}
-                    className="w-full text-xs p-2.5 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Mencione os detalhes do problema</label>
-                  <textarea
-                    rows={3}
-                    required
-                    placeholder="Mencione detalhes, quantidade de tomadas ou o tipo de material disponível..."
-                    value={reqDesc}
-                    onChange={(e) => setReqDesc(e.target.value)}
-                    className="w-full text-xs p-2.5 border border-neutral-200 rounded-xl focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-1">Data Agendada Pretendida</label>
-                  <input
-                    type="date"
-                    required
-                    value={reqDate}
-                    onChange={(e) => setReqDate(e.target.value)}
-                    className="w-full text-xs p-2.5 border border-neutral-200 rounded-xl focus:outline-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-2">
-                    <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-0.5">Endereço de Execução</label>
-                    <input type="text" placeholder="Rua..." value={reqAddress} onChange={e => setReqAddress(e.target.value)} className="w-full text-xs p-2 border border-neutral-200 rounded-lg" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] uppercase font-bold text-neutral-400 block mb-0.5">Cidade</label>
-                    <input type="text" placeholder="S.P..." value={reqCity} onChange={e => setReqCity(e.target.value)} className="w-full text-xs p-2 border border-neutral-200 rounded-lg" />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-md"
-                >
-                  Confirmar e Abrir Solicitação
-                </button>
-              </form>
-            </div>
-          ) : activeChatConvId ? (
+          {activeChatConvId ? (
             /* Active chatting interface */
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -730,6 +707,287 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
           onPaymentSuccess={handlePaySuccess}
           onClose={() => setPayingRequest(null)}
         />
+      )}
+
+      {/* Floating Suspended Service Request Modal Dialog */}
+      {isCreatingRequest && (
+        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in overflow-y-auto">
+          <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-2xl w-full max-w-lg relative animate-in scale-in duration-200">
+            <div className="flex items-center justify-between mb-4 border-b border-neutral-105 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                  ➕
+                </div>
+                <h3 className="text-xs font-black text-neutral-905 uppercase tracking-wide">Solicitar Novo Serviço</h3>
+              </div>
+              <button 
+                onClick={() => setIsCreatingRequest(false)}
+                className="text-neutral-400 hover:text-neutral-750 font-extrabold text-xs px-2.5 py-1 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                X Fechar
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateRequestSubmit} className="space-y-4">
+              <div>
+                <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Escolher Categoria de Serviço</label>
+                <select
+                  required
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 transition-all font-semibold"
+                >
+                  <option value="">Selecione a categoria desejada...</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Título do Serviço</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Trocar fiação do chuveiro, consertar pia..."
+                  value={reqTitle}
+                  onChange={(e) => setReqTitle(e.target.value)}
+                  className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Mencione os detalhes do problema</label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Mencione detalhes, quantidade de tomadas ou o tipo de material disponível..."
+                  value={reqDesc}
+                  onChange={(e) => setReqDesc(e.target.value)}
+                  className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Data Agendada Pretendida</label>
+                <input
+                  type="date"
+                  required
+                  value={reqDate}
+                  onChange={(e) => setReqDate(e.target.value)}
+                  className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-0.5">Endereço de Execução</label>
+                  <input 
+                    type="text" 
+                    placeholder="Rua, número..." 
+                    value={reqAddress} 
+                    onChange={e => setReqAddress(e.target.value)} 
+                    className="w-full text-xs p-2.5 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-medium" 
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-0.5">Cidade</label>
+                  <input 
+                    type="text" 
+                    placeholder="Cidade..." 
+                    value={reqCity} 
+                    onChange={e => setReqCity(e.target.value)} 
+                    className="w-full text-xs p-2.5 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-medium" 
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs transition-all shadow-md active:scale-98 tracking-wider uppercase cursor-pointer"
+              >
+                Confirmar e Abrir Solicitação
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Edit Profile Modal */}
+      {isEditingProfile && (
+        <div className="fixed inset-0 bg-neutral-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in overflow-y-auto">
+          <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-2xl w-full max-w-lg relative animate-in scale-in duration-200">
+            <div className="flex items-center justify-between mb-4 border-b border-neutral-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-neutral-100 text-neutral-800 flex items-center justify-center font-bold">
+                  👤
+                </div>
+                <h3 className="text-xs font-black text-neutral-900 uppercase tracking-wide">Atualizar Meu Perfil</h3>
+              </div>
+              <button 
+                onClick={() => setIsEditingProfile(false)}
+                className="text-neutral-400 hover:text-neutral-700 font-extrabold text-xs px-2.5 py-1 rounded-lg hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
+                X Fechar
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              {/* Photo upload block */}
+              <div className="flex flex-col items-center gap-3 bg-neutral-50 p-4 rounded-xl border border-neutral-200/60 mb-2">
+                <span className="text-[10px] uppercase font-black text-neutral-400 tracking-wider">Foto do Perfil (Arraste ou Selecione)</span>
+                <div className="relative group">
+                  <div className="w-20 h-20 rounded-full border-2 border-neutral-300 overflow-hidden bg-white shadow-sm flex items-center justify-center">
+                    {tempAvatar ? (
+                      <img src={tempAvatar} referrerPolicy="no-referrer" alt="Avatar preview" className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-neutral-100 text-neutral-300 rounded-full">
+                        <User className="w-8 h-8" />
+                      </div>
+                    )}
+                  </div>
+                  {/* Photo mini badge indicators */}
+                  <label htmlFor="android-client-avatar-upload" className="absolute bottom-0 right-0 w-8 h-8 bg-neutral-900 hover:bg-neutral-800 text-white rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-colors border-2 border-white">
+                    <span className="text-xs font-bold">📸</span>
+                  </label>
+                  <input 
+                    id="android-client-avatar-upload"
+                    type="file" 
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setTempAvatar(reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1 w-full max-w-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById('android-client-avatar-upload');
+                      if (el) el.click();
+                    }}
+                    className="w-full py-2 px-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold rounded-lg text-[10px] uppercase cursor-pointer transition-all border border-neutral-300 flex items-center justify-center gap-1.5 min-h-[38px]"
+                  >
+                    <span>📱 Abrir Galeria / Câmera (Android)</span>
+                  </button>
+                  <span className="text-[9px] text-neutral-400 text-center font-medium">Toque acima para escolher fotos no celular</span>
+                </div>
+                
+                {/* Drag-and-drop feedback/area */}
+                <div className="w-full border border-dashed border-neutral-300 rounded-lg p-2 text-center hover:bg-neutral-100 transition-all cursor-pointer relative">
+                  <span className="text-[10px] font-bold text-neutral-500">
+                    Ou cole uma URL direta de imagem abaixo:
+                  </span>
+                  <input 
+                    type="text" 
+                    placeholder="Cole a URL da sua foto (opcional)..." 
+                    value={tempAvatar}
+                    onChange={(e) => setTempAvatar(e.target.value)}
+                    className="w-full text-[11px] p-2 mt-1.5 border border-neutral-200 rounded-md focus:outline-none focus:border-neutral-950 font-mono bg-white text-neutral-700"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Nome Completo</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Seu nome..."
+                  value={editFullName}
+                  onChange={(e) => setEditFullName(e.target.value)}
+                  className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">WhatsApp / Celular</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Apenas números com DDD..."
+                    value={editClientPhone}
+                    onChange={(e) => setEditClientPhone(e.target.value)}
+                    className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Logradouro / Endereço</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Logradouro, número..."
+                    value={editClientAddress}
+                    onChange={(e) => setEditClientAddress(e.target.value)}
+                    className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Cidade</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Cidade..."
+                    value={editClientCity}
+                    onChange={(e) => setEditClientCity(e.target.value)}
+                    className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Estado</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={2}
+                    placeholder="UF (Ex: SP)..."
+                    value={editClientState}
+                    onChange={(e) => setEditClientState(e.target.value.toUpperCase())}
+                    className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800 text-center"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase font-black text-neutral-400 block mb-1">Código Postal (CEP)</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: 01000-000..."
+                  value={editClientPostalCode}
+                  onChange={(e) => setEditClientPostalCode(e.target.value)}
+                  className="w-full text-xs p-3 border border-neutral-200 rounded-xl focus:outline-none focus:border-neutral-900 bg-neutral-50 focus:bg-white transition-all font-semibold text-neutral-800"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSavingProfile}
+                className="w-full py-3.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white font-extrabold text-xs transition-all shadow-md active:scale-98 tracking-wider uppercase cursor-pointer flex items-center justify-center gap-1"
+              >
+                {isSavingProfile ? (
+                  <span>Salvando Dados...</span>
+                ) : (
+                  <span>Salvar Dados e Foto</span>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

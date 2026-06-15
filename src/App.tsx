@@ -265,12 +265,14 @@ export default function App() {
           <ClientDashboard 
             currentUser={currentUser} 
             onNavigateHome={() => handleLogout()} 
+            onProfileUpdate={() => handleRefreshData()}
           />
         )}
         {currentUser.role === 'provider' && (
           <ProviderDashboard 
             currentUser={currentUser} 
             onNavigateHome={() => handleLogout()} 
+            onProfileUpdate={() => handleRefreshData()}
           />
         )}
         {currentUser.role === 'admin' && (

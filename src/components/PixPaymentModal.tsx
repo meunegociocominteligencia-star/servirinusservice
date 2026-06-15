@@ -380,22 +380,29 @@ export const PixPaymentModal: React.FC<PixPaymentModalProps> = ({
 
                   {/* Attachment Form container */}
                   <div className="text-left space-y-2">
-                    <label className="text-[10px] text-neutral-400 uppercase font-bold tracking-wider">
+                    <label htmlFor="android-receipt-upload" className="text-[10px] text-neutral-400 uppercase font-black tracking-wider block">
                       Comprovante de Transferência bancária (Opcional)
                     </label>
-                    <div className="border-2 border-dashed border-neutral-200 rounded-xl p-4 hover:border-neutral-400 transition-colors bg-neutral-50/30 flex flex-col items-center justify-center text-center relative cursor-pointer">
+                    <div 
+                      onClick={() => {
+                        const el = document.getElementById('android-receipt-upload');
+                        if (el) el.click();
+                      }}
+                      className="border-2 border-dashed border-neutral-200 rounded-xl p-5 hover:border-neutral-400 transition-colors bg-white hover:bg-neutral-50 flex flex-col items-center justify-center text-center relative cursor-pointer group min-h-[120px]"
+                    >
                       <input 
+                        id="android-receipt-upload"
                         type="file" 
                         accept="image/*,application/pdf"
                         onChange={handleFileChange}
-                        className="absolute inset-0 opacity-0 cursor-pointer" 
+                        className="hidden" 
                       />
-                      <Upload className="w-6 h-6 text-neutral-400 mb-1.5" />
-                      <p className="text-xs text-neutral-700 font-bold">
-                        {receiptFileName || 'Arraste ou selecione a imagem do comprovante'}
+                      <Upload className="w-7 h-7 text-neutral-400 mb-2 group-hover:scale-110 transition-transform" />
+                      <p className="text-xs text-neutral-700 font-bold max-w-xs truncate px-2">
+                        {receiptFileName || 'Selecionar da Galeria ou Arquivos'}
                       </p>
-                      <p className="text-[10px] text-neutral-400 mt-0.5">
-                        PNG, JPG, PDF até 5MB
+                      <p className="text-[10px] text-neutral-400 mt-1 font-semibold bg-neutral-100 px-2 py-0.5 rounded">
+                        PNG, JPG, PDF • Toque para escolher (Android/Chrome)
                       </p>
                     </div>
                   </div>

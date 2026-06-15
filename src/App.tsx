@@ -288,7 +288,7 @@ export default function App() {
       
       {/* Navigation Menu header */}
       <nav className="bg-white border-b border-neutral-100 py-4 px-6 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => setSelectedCategorySlug(null)}>
             <div className="w-9 h-9 bg-neutral-900 text-white rounded-xl flex items-center justify-center font-black text-xl shadow-xs">
               S
@@ -305,16 +305,16 @@ export default function App() {
             <a href="#prestadores" className="hover:text-black">Profissionais de Destaque</a>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center sm:justify-end gap-2 w-full sm:w-auto">
             <button
               onClick={() => setAuthModal('login')}
-              className="py-2 px-4 rounded-xl border border-neutral-200 text-neutral-700 hover:text-neutral-900 text-xs font-bold transition-all flex items-center gap-1 active:scale-95"
+              className="py-2.5 px-4 rounded-xl border border-neutral-200 text-neutral-700 hover:text-neutral-900 text-xs font-bold transition-all flex items-center gap-1 active:scale-95 whitespace-nowrap"
             >
               <LogIn className="w-3.5 h-3.5" /> Entrar
             </button>
             <button
               onClick={() => setAuthModal('registerProvider')}
-              className="py-2 px-4 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold transition-all active:scale-95"
+              className="py-2.5 px-4 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold transition-all active:scale-95 whitespace-nowrap shadow-xs"
             >
               Quero Ser Prestador
             </button>

@@ -224,7 +224,7 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
     <div className="min-h-screen bg-neutral-50 pb-12 animate-fade-in">
       {/* Header Widget */}
       <header className="bg-white border-b border-neutral-200 py-4 px-6 sticky top-0 z-20 shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-neutral-900 text-white rounded-full flex items-center justify-center font-bold">
               {currentUser.avatar_url ? (
@@ -239,11 +239,11 @@ export const ClientDashboard: React.FC<ClientDashboardProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center sm:justify-end gap-3 w-full sm:w-auto">
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors py-2 px-3 hover:bg-rose-50 rounded-lg flex items-center gap-1"
+                className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors py-2 px-3 hover:bg-rose-50 rounded-lg flex items-center gap-1 whitespace-nowrap"
               >
                 Sair da Conta
               </button>

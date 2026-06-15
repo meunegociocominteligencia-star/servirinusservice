@@ -179,7 +179,7 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
       {/* Dynamic Header */}
       <nav className="bg-white border-b border-neutral-200 py-4 px-6 sticky top-0 z-20 shadow-xs">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
             <div className="relative">
               <img 
                 src={currentUser.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} 
@@ -189,8 +189,8 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
                 providerProfile?.status === 'approved' ? 'bg-emerald-500' : 'bg-amber-400'
               }`} />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 flex-wrap">
+            <div className="flex flex-col items-center sm:items-start">
+              <div className="flex items-center justify-center sm:justify-start gap-1.5 flex-wrap">
                 <h2 className="text-sm font-black text-neutral-900">{currentUser.full_name}</h2>
                 <span className={`text-[9px] uppercase font-bold py-0.5 px-2 rounded-full ${
                   providerProfile?.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
@@ -212,11 +212,11 @@ export const ProviderDashboard: React.FC<ProviderDashboardProps> = ({
             </div>
           </div>
 
-          <div className="flex gap-2.5">
+          <div className="flex gap-2.5 justify-center w-full sm:w-auto">
             {onNavigateHome && (
               <button
                 onClick={onNavigateHome}
-                className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors py-2 px-3 hover:bg-rose-50 rounded-lg flex items-center gap-1"
+                className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors py-2 px-4 hover:bg-rose-50 rounded-lg flex items-center gap-1 whitespace-nowrap"
               >
                 Sair da Conta
               </button>
